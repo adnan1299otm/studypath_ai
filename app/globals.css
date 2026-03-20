@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6264F4;
+  --color-bg-dark: #0B0B0F;
+  --color-card-dark: #13131F;
+  --color-card-dark-2: #1A1A2E;
+  --color-border-dark: #252538;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-dark text-slate-300 font-display;
+  }
+}

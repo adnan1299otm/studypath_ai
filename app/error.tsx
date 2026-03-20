@@ -1,0 +1,35 @@
+'use client';
+
+import { useEffect } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    // Log the error to an error reporting service
+    console.error('Application Error:', error);
+  }, [error]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
+      <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-6">
+        <AlertTriangle className="w-10 h-10 text-rose-500" />
+      </div>
+      <h2 className="text-2xl font-extrabold text-white mb-3">Something went wrong!</h2>
+      <p className="text-slate-400 text-sm mb-8 max-w-[280px] mx-auto leading-relaxed">
+        {error.message || "An unexpected error occurred while loading this page."}
+      </p>
+      <button
+        onClick={() => reset()}
+        className="px-8 py-4 bg-primary text-white font-extrabold rounded-2xl hover:opacity-90 transition-opacity shadow-[0_8px_20px_rgba(98,100,244,0.25)] flex items-center gap-2"
+      >
+        <RefreshCw className="w-5 h-5" /> Try Again
+      </button>
+    </div>
+  );
+}
