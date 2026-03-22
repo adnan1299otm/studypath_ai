@@ -33,10 +33,20 @@ export async function POST(req: Request) {
 
     const resultText = await callGeminiWithRotation(prompt, systemInstruction);
 
-    // Save to database (optional, but good for history)
-    await supabase.from('ai_chats').insert([
-      { user_id: user.id, message, role: 'user' },
-      { user_id: user.id, message: resultText, role: 'assistant' }
+    // Save to database
+    await supabase.from('ai_chat_messages').insert([
+      {
+        user_id: user.id,
+        role: 'user',
+        content: message,
+        session_date: new Date().toISOString().split('T')[0]
+      },
+      {
+        user_id: user.id, 
+        role: 'assistant',
+        content: resultText,
+        session_date: new Date().toISOString().split('T')[0]
+      }
     ]);
 
     return NextResponse.json({ reply: resultText });

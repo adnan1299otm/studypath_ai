@@ -23,18 +23,20 @@ export default function AIPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase
-        .from('ai_chats')
+        .from('ai_chat_messages')
         .select('*')
         .eq('user_id', user.id)
+        .eq('session_date', today)
         .order('created_at', { ascending: true })
-        .limit(50);
+        .limit(20);
 
       if (data) {
         setMessages(data.map(d => ({
           id: d.id,
           role: d.role as 'user' | 'assistant',
-          content: d.message
+          content: d.content
         })));
       }
     };
