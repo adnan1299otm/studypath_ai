@@ -1,11 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useProfile } from '@/hooks/use-profile';
 import { Flame, Zap, Heart } from 'lucide-react';
 
 export default function Header() {
   const { profile } = useProfile();
+  const pathname = usePathname();
+
+  if (pathname === '/configure') {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-bg-dark/95 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">

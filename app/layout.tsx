@@ -1,9 +1,5 @@
 import type {Metadata, Viewport} from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display' });
 
 export const metadata: Metadata = {
   title: 'StudyPath AI',
@@ -26,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jakarta.variable}`}>
+    <html lang="en" className="dark">
       <body className="bg-bg-dark text-slate-200 font-sans antialiased selection:bg-primary/30 selection:text-white" suppressHydrationWarning>
         {children}
       </body>

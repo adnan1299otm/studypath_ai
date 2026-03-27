@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-display: system-ui, -apple-system, sans-serif;
+}
+
 @theme {
   --color-primary: #6264F4;
   --color-bg-dark: #0B0B0F;
@@ -12,5 +17,32 @@
 @layer base {
   body {
     @apply bg-bg-dark text-slate-300 font-display;
+  }
+}
+
+@layer components {
+  input[type="range"].custom-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--color-border-dark);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"].custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(98,100,244,0.5);
+    margin-top: -8px;
+    border: 2px solid var(--color-bg-dark);
+  }
+  input[type="range"].custom-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 4px;
   }
 }

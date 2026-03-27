@@ -7,6 +7,10 @@ import { Map, Trophy, Brain, User } from 'lucide-react';
 export default function BottomNav() {
   const pathname = usePathname();
 
+  if (pathname === '/configure') {
+    return null;
+  }
+
   const tabs = [
     { name: 'Roadmap', href: '/roadmap', icon: Map, activeColor: 'text-primary' },
     { name: 'Rank', href: '/rank', icon: Trophy, activeColor: 'text-primary' },
