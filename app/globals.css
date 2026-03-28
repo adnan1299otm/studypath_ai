@@ -11,6 +11,10 @@
   --color-card-dark: #13131F;
   --color-card-dark-2: #1A1A2E;
   --color-border-dark: #252538;
+  --color-hadith-deep: #071a0e;
+  --color-hadith-mid: #0d2818;
+  --color-hadith-card: #0f2d1a;
+  --color-hadith-border: #1a4a2a;
   --font-display: "Plus Jakarta Sans", sans-serif;
 }
 
@@ -20,11 +24,33 @@
   }
 }
 
+@layer utilities {
+  .hadith-bg {
+    background: radial-gradient(ellipse at top, var(--color-hadith-mid) 0%, var(--color-hadith-deep) 50%, #040d08 100%);
+  }
+  .hadith-glow {
+    box-shadow: 0 0 60px rgba(16,185,129,0.12), 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .spin-slow {
+    animation: spinSlow 20s linear infinite;
+  }
+  .fade-in {
+    animation: fadeInUp 0.5s ease forwards;
+  }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @layer components {
   input[type="range"].custom-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 8px;
     border-radius: 4px;
     background: var(--color-border-dark);
     outline: none;

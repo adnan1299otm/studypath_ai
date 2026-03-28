@@ -15,9 +15,16 @@ export async function POST(request: Request) {
     const xp_earned = Math.max(10, Math.floor(duration_secs / 60) * 2)
 
     // Create admin client to bypass RLS for updates
+    const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL'];
+    const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
     const adminClient = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      supabaseUrl,
+      supabaseServiceKey
     )
 
     // 1. Save study session

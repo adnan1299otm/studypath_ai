@@ -1,94 +1,89 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpen, Heart, Share2 } from 'lucide-react';
+import { RefreshCw, Copy, Share2, History, Check } from 'lucide-react';
+import Link from 'next/link';
 
 interface Hadith {
-  id: number;
-  chapter_id: number;
-  book_id: number;
+  text: string;
+  source: string;
   narrator: string;
-  bn: string;
-  ar: string;
 }
 
+const hadiths: Hadith[] = [
+  { text: "জ্ঞান অর্জন করা প্রত্যেক মুসলিমের জন্য ফরজ।", source: "ইবনে মাজাহ", narrator: "আনাস ইবনে মালিক (রা.)" },
+  { text: "যে ব্যক্তি জ্ঞান অন্বেষণে পথ চলে, আল্লাহ তার জন্য জান্নাতের পথ সহজ করে দেন।", source: "মুসলিম", narrator: "আবু হুরায়রা (রা.)" },
+  { text: "মুমিনের সর্বোত্তম সম্পদ হলো উত্তম চরিত্র।", source: "বুখারী", narrator: "আবু হুরায়রা (রা.)" },
+  { text: "তোমাদের মধ্যে সে-ই সর্বোত্তম যে কুরআন শেখে এবং অপরকে শেখায়।", source: "বুখারী", narrator: "উসমান (রা.)" },
+  { text: "সহজ করো, কঠিন করো না। সুসংবাদ দাও, বিমুখ করো না।", source: "বুখারী", narrator: "আনাস (রা.)" },
+  { text: "যে ব্যক্তি আল্লাহর উপর ভরসা রাখে, আল্লাহ তার জন্য যথেষ্ট।", source: "তিরমিযী", narrator: "উমর (রা.)" },
+  { text: "পরিষ্কার-পরিচ্ছন্নতা ঈমানের অর্ধেক।", source: "মুসলিম", narrator: "আবু মালিক আল-আশআরী (রা.)" },
+];
+
 export default function HadithPage() {
-  const [hadiths, setHadiths] = useState<Hadith[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isMuslim, setIsMuslim] = useState<boolean | null>(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [history, setHistory] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    const init = async () => {
-      // Check local storage for preference
-      const pref = localStorage.getItem('is_muslim');
-      if (pref !== null) {
-        setIsMuslim(pref === 'true');
-      }
-
-      // Fetch random hadiths from a public API (using a placeholder array for this demo)
-      // In a real app, you would fetch from a Bengali Hadith API
-      const mockData: Hadith[] = [
-        {
-          id: 1,
-          chapter_id: 1,
-          book_id: 1,
-          narrator: "উমার ইবনুল খাত্তাব (রাঃ)",
-          ar: "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ",
-          bn: "নিশ্চয়ই সমস্ত কাজ নিয়তের উপর নির্ভরশীল।"
-        },
-        {
-          id: 2,
-          chapter_id: 1,
-          book_id: 1,
-          narrator: "আবূ হুরায়রা (রাঃ)",
-          ar: "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
-          bn: "যে ব্যক্তি জ্ঞান অর্জনের জন্য কোনো পথ অবলম্বন করে, আল্লাহ তার জন্য জান্নাতের পথ সহজ করে দেন।"
-        },
-        {
-          id: 3,
-          chapter_id: 1,
-          book_id: 1,
-          narrator: "আনাস ইবনু মালিক (রাঃ)",
-          ar: "طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ",
-          bn: "জ্ঞান অন্বেষণ করা প্রত্যেক মুসলমানের উপর ফরজ।"
-        }
-      ];
-      
-      setHadiths(mockData);
-      setLoading(false);
-    };
-
-    init();
+    const stored = localStorage.getItem('is_muslim');
+    if (stored !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsMuslim(stored === 'true');
+    }
   }, []);
 
-  const handlePreference = (value: boolean) => {
-    localStorage.setItem('is_muslim', value.toString());
-    setIsMuslim(value);
+  const handleMuslim = (yes: boolean) => {
+    localStorage.setItem('is_muslim', yes ? 'true' : 'false');
+    setIsMuslim(yes);
+  };
+
+  const loadRandomHadith = () => {
+    setIsLoading(true);
+    setIsAnimating(true);
+    
+    setTimeout(() => {
+      let newIdx = Math.floor(Math.random() * hadiths.length);
+      while (newIdx === currentIdx) newIdx = Math.floor(Math.random() * hadiths.length);
+      
+      setHistory(prev => {
+        if (!prev.includes(currentIdx)) {
+          return [currentIdx, ...prev];
+        }
+        return prev;
+      });
+      setCurrentIdx(newIdx);
+      setIsLoading(false);
+      
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 50);
+    }, 400);
+  };
+
+  const copyHadith = () => {
+    const h = hadiths[currentIdx];
+    const text = `"${h.text}"\n— ${h.narrator} | ${h.source}`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   if (isMuslim === null) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] p-6 text-center">
-        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6">
-          <span className="text-4xl">☪️</span>
-        </div>
-        <h2 className="text-2xl font-extrabold text-white mb-3">Welcome to Hadith</h2>
-        <p className="text-slate-400 text-sm mb-8 max-w-[250px] mx-auto">
-          This section contains daily Islamic reminders. Would you like to enable it?
-        </p>
-        <div className="flex gap-4 w-full max-w-[300px]">
-          <button
-            onClick={() => handlePreference(false)}
-            className="flex-1 py-3 bg-card-dark border border-border-dark text-slate-300 font-bold rounded-xl hover:bg-border-dark transition-colors"
-          >
-            No, Thanks
-          </button>
-          <button
-            onClick={() => handlePreference(true)}
-            className="flex-1 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
-          >
-            Yes, Enable
-          </button>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="bg-hadith-card border border-hadith-border rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+          <div className="text-5xl mb-4">☪️</div>
+          <h2 className="text-xl font-extrabold text-white mb-2">আপনি কি মুসলিম?</h2>
+          <p className="text-emerald-600/80 text-sm mb-8 leading-relaxed">হাদিস Section শুধুমাত্র মুসলিম শিক্ষার্থীদের জন্য।</p>
+          <div className="flex gap-3">
+            <button onClick={() => handleMuslim(false)} className="flex-1 py-3 border-2 border-hadith-border text-slate-400 font-bold rounded-xl hover:bg-white/5 transition-all">না</button>
+            <button onClick={() => handleMuslim(true)} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/50">হ্যাঁ</button>
+          </div>
         </div>
       </div>
     );
@@ -96,66 +91,126 @@ export default function HadithPage() {
 
   if (!isMuslim) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] p-6 text-center">
-        <BookOpen className="w-16 h-16 text-slate-600 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Section Disabled</h2>
-        <p className="text-slate-400 text-sm mb-6">You have chosen to hide the Hadith section.</p>
-        <button
-          onClick={() => handlePreference(true)}
-          className="text-emerald-400 text-sm font-bold hover:underline"
-        >
-          Enable Hadith Section
-        </button>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="bg-card-dark border border-border-dark rounded-2xl p-8 max-w-sm w-full text-center">
+          <div className="text-5xl mb-4">🙏</div>
+          <h2 className="text-lg font-extrabold text-white mb-2">এই section টি শুধু মুসলিমদের জন্য</h2>
+          <p className="text-slate-400 text-sm mb-6">তুমি হাদিস page use করতে পারবে না।</p>
+          <Link href="/roadmap" className="block w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all">Roadmap এ ফিরে যাও</Link>
+        </div>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const currentHadith = hadiths[currentIdx];
 
   return (
-    <div className="p-6 pb-24">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-extrabold text-white mb-2 text-emerald-400">Daily Hadith</h1>
-        <p className="text-slate-400 text-sm">Find peace and motivation in the words of the Prophet (ﷺ).</p>
+    <div className="hadith-bg min-h-screen relative">
+      {/* Decorative background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-900/20 blur-[100px] rounded-full"></div>
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-emerald-800/10 blur-[80px] rounded-full"></div>
+        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#10b981 1px,transparent 1px)', backgroundSize: '36px 36px' }}></div>
       </div>
 
-      <div className="space-y-6">
-        {hadiths.map((hadith) => (
-          <div key={hadith.id} className="bg-card-dark border border-border-dark rounded-3xl p-6 relative overflow-hidden">
-            {/* Decorative background element */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none" />
-            
-            <div className="relative z-10">
-              <div className="text-xs font-bold text-emerald-500 mb-4 uppercase tracking-wider flex items-center gap-2">
-                <BookOpen className="w-4 h-4" /> {hadith.narrator} হতে বর্ণিত
-              </div>
-              
-              <div className="text-right font-arabic text-2xl leading-loose text-slate-200 mb-6" dir="rtl">
-                {hadith.ar}
-              </div>
-              
-              <div className="text-sm leading-relaxed text-slate-300 font-medium border-t border-border-dark pt-4">
-                {hadith.bn}
-              </div>
+      <main className="max-w-2xl mx-auto px-4 py-10 pb-32 relative z-10">
+        {/* Page title */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-emerald-900/30 border border-emerald-700/30 px-4 py-1.5 rounded-full mb-4">
+            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">☪️ হাদিস Section</span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-white mb-2">আজকের হাদিস</h1>
+          <p className="text-emerald-700/80 text-sm">প্রতিটি মুসলিমের জন্য — সবসময় বিনামূল্যে</p>
+        </div>
 
-              <div className="flex items-center justify-end gap-4 mt-6 pt-4 border-t border-border-dark/50">
-                <button className="text-slate-500 hover:text-emerald-400 transition-colors">
-                  <Heart className="w-5 h-5" />
-                </button>
-                <button className="text-slate-500 hover:text-emerald-400 transition-colors">
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
+        {/* Decorative geometric */}
+        <div className="flex justify-center mb-8 pointer-events-none select-none">
+          <div className="relative w-24 h-24 opacity-20">
+            <svg className="spin-slow w-full h-full" viewBox="0 0 100 100" fill="none">
+              <polygon points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35" stroke="#10b981" strokeWidth="1.5" fill="none"/>
+              <circle cx="50" cy="50" r="20" stroke="#d4af37" strokeWidth="1" fill="none"/>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">☪️</div>
+          </div>
+        </div>
+
+        {/* Hadith card */}
+        <div 
+          className={`bg-hadith-card border border-hadith-border rounded-2xl p-8 md:p-10 hadith-glow mb-6 relative overflow-hidden transition-all duration-400 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0 fade-in'}`}
+        >
+          {/* decorative quote mark */}
+          <div className="absolute top-4 left-6 text-emerald-900/40 text-8xl font-serif leading-none select-none pointer-events-none">&quot;</div>
+          <div className="absolute bottom-4 right-6 text-emerald-900/40 text-8xl font-serif leading-none select-none pointer-events-none rotate-180">&quot;</div>
+
+          <div className="relative z-10">
+            {/* Hadith text */}
+            <p className="text-xl md:text-2xl font-bold text-white leading-relaxed text-center mb-8 tracking-wide">
+              {currentHadith.text}
+            </p>
+
+            {/* Source pills */}
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              <span className="bg-emerald-900/50 border border-emerald-700/40 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-full">{currentHadith.source}</span>
+              <span className="text-slate-600 text-xs">থেকে নেওয়া হয়েছে</span>
+              <span className="bg-yellow-900/30 border border-yellow-700/30 text-yellow-400/80 text-xs font-bold px-3 py-1.5 rounded-full">{currentHadith.narrator}</span>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3 mb-10">
+          <button 
+            onClick={loadRandomHadith} 
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 bg-emerald-700 hover:bg-emerald-600 active:scale-[0.98] text-white font-extrabold py-4 rounded-xl transition-all shadow-lg shadow-emerald-900/40 group disabled:opacity-70"
+          >
+            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+            {isLoading ? 'লোড হচ্ছে...' : 'র্যান্ডম হাদিস দেখুন →'}
+          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={copyHadith} className={`flex items-center justify-center gap-2 py-3 bg-hadith-card border border-hadith-border hover:border-emerald-700/50 font-bold rounded-xl transition-all text-sm hover:bg-emerald-900/20 ${copied ? 'text-emerald-400' : 'text-slate-300'}`}>
+              {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />} 
+              {copied ? 'Copied!' : 'Copy করুন'}
+            </button>
+            <button className="flex items-center justify-center gap-2 py-3 bg-hadith-card border border-hadith-border hover:border-emerald-700/50 text-slate-300 font-bold rounded-xl transition-all text-sm hover:bg-emerald-900/20">
+              <Share2 className="w-5 h-5" /> Share করুন
+            </button>
+          </div>
+        </div>
+
+        {/* Always free banner */}
+        <div className="bg-emerald-950/60 border border-emerald-800/40 rounded-2xl p-5 flex items-center gap-4 mb-10">
+          <div className="text-3xl flex-shrink-0">🔓</div>
+          <div>
+            <p className="font-extrabold text-emerald-300 text-sm mb-0.5">সবসময় FREE — কখনো Lock হবে না</p>
+            <p className="text-emerald-700 text-xs leading-relaxed">এই section টি কোনো paid plan এর অন্তর্ভুক্ত নয়। প্রতিটি মুসলিম শিক্ষার্থীর জন্য সবসময় বিনামূল্যে।</p>
+          </div>
+        </div>
+
+        {/* Previous hadiths */}
+        {history.length > 0 && (
+          <div>
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <History className="w-4 h-4" /> আগের হাদিস
+            </h3>
+            <div className="flex flex-col gap-3">
+              {history.map((idx, i) => {
+                const h = hadiths[idx];
+                return (
+                  <div key={i} className="bg-hadith-card/60 border border-hadith-border/50 rounded-xl p-4 hover:border-emerald-800/60 transition-all cursor-pointer group">
+                    <p className="text-sm text-slate-300 leading-relaxed mb-2 group-hover:text-white transition-colors">{h.text}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-600 text-xs font-bold">{h.source}</span>
+                      <span className="text-slate-700 text-xs">•</span>
+                      <span className="text-slate-600 text-xs">{h.narrator}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
