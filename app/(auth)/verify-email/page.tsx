@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const email = searchParams.get('email') || '';
+  const email = searchParams?.get('email') || '';
   const router = useRouter();
   const supabase = createClient();
   

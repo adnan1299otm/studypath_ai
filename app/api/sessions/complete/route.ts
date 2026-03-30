@@ -9,26 +9,26 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { roadmap_id, day_number, duration_secs, mood } = await request.json()
-    
-    console.log('Session complete API called', { day_number, roadmap_id })
+
+    if (!roadmap_id || !day_number || !duration_secs) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
 
     const xp_earned = Math.max(10, Math.floor(duration_secs / 60) * 2)
 
-    // Create admin client to bypass RLS for updates
-    const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL'];
-    const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+    const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL']
+    const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY']
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
-    const adminClient = createAdminClient(
-      supabaseUrl,
-      supabaseServiceKey
-    )
+    const adminClient = createAdminClient(supabaseUrl, supabaseServiceKey, {
+      global: { fetch: (...args) => fetch(...args) }
+    })
 
     // 1. Save study session
-    await adminClient.from('study_sessions').insert({
+    const { error: sessionError } = await adminClient.from('study_sessions').insert({
       user_id: user.id,
       roadmap_id,
       day_number,
@@ -38,17 +38,18 @@ export async function POST(request: Request) {
       started_at: new Date(Date.now() - duration_secs * 1000).toISOString(),
       ended_at: new Date().toISOString(),
     })
+    if (sessionError) throw sessionError
 
     // 2. Mark current day as completed
-    await adminClient
+    const { error: completeError } = await adminClient
       .from('day_progress')
       .update({ status: 'completed', completed_at: new Date().toISOString(), mood })
       .eq('user_id', user.id)
       .eq('roadmap_id', roadmap_id)
       .eq('day_number', day_number)
+    if (completeError) throw completeError
 
-    // 3. Unlock next day (Fixes existing data without manual SQL)
-    // Only update if it's currently 'locked' to prevent downgrading completed days
+    // 3. Unlock next day only if currently locked
     const { data: nextDay } = await adminClient
       .from('day_progress')
       .select('status')
@@ -58,46 +59,24 @@ export async function POST(request: Request) {
       .single()
 
     if (nextDay && nextDay.status === 'locked') {
-      const { error: unlockError } = await adminClient
+      await adminClient
         .from('day_progress')
         .update({ status: 'available' })
         .eq('user_id', user.id)
         .eq('roadmap_id', roadmap_id)
         .eq('day_number', day_number + 1)
-
-      if (unlockError) {
-        console.error('Failed to unlock next day:', unlockError)
-      } else {
-        console.log(`Successfully unlocked day ${day_number + 1}`)
-      }
     }
 
-    // 4. Add XP and update streak
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('xp, streak, level')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      const new_xp = (profile.xp || 0) + xp_earned
-      const new_level = Math.floor(new_xp / 200) + 1
-      const new_streak = (profile.streak || 0) + 1
-
-      await adminClient
-        .from('profiles')
-        .update({ 
-          xp: new_xp, 
-          level: new_level,
-          streak: new_streak,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
-    }
+    // 4. Award XP and update streak using the database function
+    // This function handles date-based streak logic correctly
+    await adminClient.rpc('complete_day_and_award_xp', {
+      p_user_id: user.id,
+      p_xp_earned: xp_earned,
+    })
 
     return NextResponse.json({ success: true, xp_earned })
-  } catch (error: any) {
-    console.error('Session complete error:', error)
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal Server Error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

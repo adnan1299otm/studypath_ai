@@ -321,6 +321,50 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- complete_day_and_award_xp: awards XP and updates streak safely
+CREATE OR REPLACE FUNCTION public.complete_day_and_award_xp(
+  p_user_id UUID,
+  p_xp_earned INTEGER
+)
+RETURNS void AS $$
+DECLARE
+  v_last_study_date DATE;
+  v_today DATE := CURRENT_DATE;
+BEGIN
+  -- Get the last date the user studied (excluding today's just-inserted session)
+  SELECT DATE(ended_at) INTO v_last_study_date
+  FROM public.study_sessions
+  WHERE user_id = p_user_id
+    AND ended_at IS NOT NULL
+    AND DATE(ended_at) < v_today
+  ORDER BY ended_at DESC
+  LIMIT 1;
+
+  -- Update XP and level
+  UPDATE public.profiles
+  SET
+    xp = xp + p_xp_earned,
+    level = FLOOR((xp + p_xp_earned) / 200) + 1,
+    -- Streak logic: only update streak once per day
+    streak = CASE
+      WHEN NOT EXISTS (
+        SELECT 1 FROM public.study_sessions
+        WHERE user_id = p_user_id
+          AND DATE(ended_at) = v_today
+          AND ended_at < NOW() -- exclude the session just inserted
+      ) THEN
+        -- First session today: check if yesterday had a session
+        CASE
+          WHEN v_last_study_date = v_today - INTERVAL '1 day' THEN streak + 1
+          ELSE 1
+        END
+      ELSE streak -- already studied today, don't change streak
+    END,
+    updated_at = NOW()
+  WHERE id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- 4. update_streak
 CREATE OR REPLACE FUNCTION public.update_streak(p_user_id UUID)
 RETURNS void AS $$

@@ -6,7 +6,7 @@ import { BrainCircuit } from 'lucide-react';
 
 function ProcessContent() {
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams?.get('id');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 

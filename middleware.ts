@@ -32,7 +32,14 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user;
+  } catch (error) {
+    // Ignore errors during build or if Supabase is unreachable
+    console.error('Supabase getUser error:', error);
+  }
 
   const { pathname } = request.nextUrl
   const authRoutes = ['/auth', '/verify-email', '/forgot-password', '/reset-password']
@@ -62,5 +69,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.ico|api/|_not-found).*)'],
+  matcher: ['/((?!_next/static|_next/image|_next/data|favicon.ico|manifest.json|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.ico|api/|_not-found|_document|_app|_error).*)'],
 }

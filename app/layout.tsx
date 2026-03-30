@@ -34,7 +34,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: envScript }} />
+        <script dangerouslySetInnerHTML={{ __html: envScript }} suppressHydrationWarning />
       </head>
       <body className="bg-bg-dark text-slate-200 font-sans antialiased selection:bg-primary/30 selection:text-white" suppressHydrationWarning>
         {children}

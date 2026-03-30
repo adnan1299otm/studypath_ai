@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useProfile } from '@/hooks/use-profile';
@@ -11,11 +11,54 @@ export default function ProfilePage() {
   const router = useRouter();
   const supabase = createClient();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [syllabuses, setSyllabuses] = useState<any[]>([]);
+  const [loadingSyllabuses, setLoadingSyllabuses] = useState(true);
+  const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    const fetchSyllabuses = async () => {
+      if (!profile) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('syllabuses')
+        .select('id, title, is_active, status, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (data) {
+        setSyllabuses(data);
+      }
+      setLoadingSyllabuses(false);
+    };
+    
+    fetchSyllabuses();
+  }, [profile, supabase]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     await supabase.auth.signOut();
     window.location.href = '/auth';
+  };
+
+  const copyStudyId = () => {
+    if (profile?.study_id) {
+      navigator.clipboard.writeText(profile.study_id);
+      setToastMessage('Study ID copied!');
+      setTimeout(() => setToastMessage(''), 2000);
+    }
+  };
+
+  const handleSwitchSyllabus = async (id: string) => {
+    if (profile?.plan !== 'pro') return;
+    
+    // Update all to inactive
+    await supabase.from('syllabuses').update({ is_active: false }).eq('user_id', profile.id);
+    // Update selected to active
+    await supabase.from('syllabuses').update({ is_active: true }).eq('id', id);
+    
+    window.location.reload();
   };
 
   if (loading) {
@@ -30,6 +73,13 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 pb-24">
+      {/* Toast Message */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-50 animate-in fade-in slide-in-from-top-4">
+          {toastMessage}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-extrabold text-white">Profile</h1>
         <button className="w-10 h-10 bg-card-dark border border-border-dark rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors">
@@ -63,6 +113,29 @@ export default function ProfilePage() {
               {profile.plan === 'pro' ? 'PRO Plan' : 'Free Plan'}
             </span>
           </div>
+          
+          {/* Study ID */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>Study ID:</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: '#6264f4' }}>
+              {profile.study_id}
+            </span>
+            <button 
+              onClick={copyStudyId} 
+              style={{ 
+                background: 'rgba(255,255,255,0.1)', 
+                border: 'none', 
+                borderRadius: '4px', 
+                padding: '2px 6px', 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <span style={{ fontSize: '12px' }}>📋</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -82,6 +155,68 @@ export default function ProfilePage() {
           <Heart className="w-6 h-6 text-rose-500 fill-rose-500 mb-2" />
           <div className="text-xl font-black text-white">{profile.hearts}</div>
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Hearts</div>
+        </div>
+      </div>
+
+      {/* My Syllabuses Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-extrabold text-white mb-4">My Syllabuses 📚</h3>
+        
+        <div className="space-y-3">
+          {loadingSyllabuses ? (
+            <div className="text-slate-400 text-sm">Loading syllabuses...</div>
+          ) : (
+            syllabuses.map((syllabus) => (
+              <div key={syllabus.id} className="bg-card-dark border border-border-dark rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-white text-sm">{syllabus.title}</h4>
+                    {syllabus.is_active && (
+                      <span className="bg-green-500/20 text-green-400 border border-green-500/30 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 capitalize">
+                    Status: {syllabus.status}
+                  </div>
+                </div>
+                
+                {!syllabus.is_active && profile?.plan === 'pro' && (
+                  <button 
+                    onClick={() => handleSwitchSyllabus(syllabus.id)}
+                    className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Switch
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+          
+          <button
+            onClick={() => router.push('/upload')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '2px dashed rgba(98,100,244,0.3)',
+              borderRadius: '12px',
+              background: 'rgba(98,100,244,0.04)',
+              color: '#6264f4',
+              fontWeight: 800,
+              fontSize: '14px',
+              cursor: 'pointer',
+              marginTop: '8px',
+            }}
+          >
+            + নতুন Syllabus যোগ করো
+          </button>
+          
+          {profile?.plan !== 'pro' && syllabuses.length >= 1 && (
+            <div className="text-center text-xs text-slate-500 mt-2">
+              PRO plan এ unlimited syllabuses
+            </div>
+          )}
         </div>
       </div>
 

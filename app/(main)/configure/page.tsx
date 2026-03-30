@@ -19,7 +19,7 @@ import {
 
 function ConfigureContent() {
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams?.get('id');
   const router = useRouter();
   
   const [calYear, setCalYear] = useState(new Date().getFullYear());

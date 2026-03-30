@@ -8,8 +8,8 @@ import { Play, Pause, CheckCircle2, X } from 'lucide-react';
 
 function TimerContent() {
   const searchParams = useSearchParams();
-  const day = searchParams.get('day');
-  const roadmapId = searchParams.get('roadmap');
+  const day = searchParams?.get('day');
+  const roadmapId = searchParams?.get('roadmap');
   const router = useRouter();
   const supabase = createClient();
 

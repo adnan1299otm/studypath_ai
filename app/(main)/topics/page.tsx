@@ -8,7 +8,7 @@ import { ArrowRight, Clock, BarChart } from 'lucide-react';
 
 function TopicsContent() {
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams?.get('id');
   const router = useRouter();
   const supabase = createClient();
   const [topics, setTopics] = useState<Topic[]>([]);

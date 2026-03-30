@@ -21,6 +21,9 @@ export const createClient = async () => {
     supabaseUrl,
     supabaseAnonKey,
     {
+      global: {
+        fetch: (...args) => fetch(...args),
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll()

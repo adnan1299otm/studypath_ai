@@ -25,7 +25,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-50">
       <div className={`${isHadith ? 'bg-hadith-deep/95 border-hadith-border' : 'bg-card-dark/95 border-border-dark'} backdrop-blur-xl border rounded-2xl shadow-2xl flex items-center justify-around p-2`}>
         {tabs.map((tab) => {
-          const isActive = pathname.startsWith(tab.href);
+          const isActive = pathname?.startsWith(tab.href);
           const colorClass = isActive ? tab.activeColor : 'text-slate-500';
 
           if (tab.isCenter) {

@@ -6,8 +6,8 @@ import { Trophy, Zap, Clock, ArrowRight } from 'lucide-react';
 
 function CompleteContent() {
   const searchParams = useSearchParams();
-  const xp = searchParams.get('xp') || '0';
-  const duration = searchParams.get('duration') || '0';
+  const xp = searchParams?.get('xp') || '0';
+  const duration = searchParams?.get('duration') || '0';
   const router = useRouter();
 
   // Simple confetti effect using emojis
