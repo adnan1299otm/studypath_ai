@@ -15,6 +15,10 @@ export default function RoadmapPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Roadmap switcher states
+  const [allRoadmaps, setAllRoadmaps] = useState<{id: string; title: string; total_days: number; created_at: string}[]>([]);
+  const [showSwitcher, setShowSwitcher] = useState(false);
+
   // Bottom sheet states
   const [selectedDay, setSelectedDay] = useState<DayProgress | null>(null);
   const [showSheet, setShowSheet] = useState(false);
@@ -40,6 +44,31 @@ export default function RoadmapPage() {
       }
 
       setRoadmap(rData as Roadmap);
+
+      const { data: allR } = await supabase
+        .from('roadmaps')
+        .select('id, syllabus_id, total_days, created_at, is_active')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Get syllabus title for each roadmap
+      if (allR && allR.length > 0) {
+        const syllabusIds = allR.map((r: any) => r.syllabus_id).filter(Boolean);
+        const { data: syllabuses } = await supabase
+          .from('syllabuses')
+          .select('id, title')
+          .in('id', syllabusIds);
+
+        const syllabusMap: Record<string, string> = {};
+        syllabuses?.forEach((s: any) => { syllabusMap[s.id] = s.title; });
+
+        setAllRoadmaps(allR.map((r: any) => ({
+          id: r.id,
+          title: syllabusMap[r.syllabus_id] || `Roadmap ${r.total_days} days`,
+          total_days: r.total_days,
+          created_at: r.created_at,
+        })));
+      }
 
       const { data: dData } = await supabase
         .from('day_progress')
@@ -149,6 +178,17 @@ export default function RoadmapPage() {
     setSelectedDay(null);
   };
 
+  const switchRoadmap = async (newRoadmapId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    // Set all roadmaps inactive, then set selected one active
+    await supabase.from('roadmaps').update({ is_active: false }).eq('user_id', user.id);
+    await supabase.from('roadmaps').update({ is_active: true }).eq('id', newRoadmapId);
+    setShowSwitcher(false);
+    setLoading(true);
+    window.location.reload();
+  };
+
   if (loading) return <div className="p-6 text-center text-slate-400">Loading roadmap...</div>;
 
   if (!roadmap) {
@@ -202,6 +242,26 @@ export default function RoadmapPage() {
         }
         @keyframes dashMove { to { stroke-dashoffset: -26; } }
       `}</style>
+
+      {allRoadmaps.length > 1 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowSwitcher(true)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-card-dark border border-border-dark rounded-2xl hover:border-primary/40 transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-white truncate max-w-[180px]">
+                {roadmap ? (allRoadmaps.find(r => r.id === roadmap.id)?.title || 'Current Roadmap') : 'Select Roadmap'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500 font-bold">{allRoadmaps.length} roadmaps</span>
+              <ChevronRight className="w-4 h-4 text-slate-500" />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* SECTION 1 — Level Badge */}
       <div className="flex justify-center mb-8">
@@ -470,6 +530,53 @@ export default function RoadmapPage() {
             )}
           </div>
         </div>
+      )}
+
+      {showSwitcher && (
+        <>
+          <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm" onClick={() => setShowSwitcher(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-[100] max-w-lg mx-auto"
+            style={{ animation: 'sheetIn .3s cubic-bezier(.32,.72,0,1) forwards' }}>
+            <div className="bg-card-dark border-t border-border-dark rounded-t-3xl p-6">
+              <div className="w-10 h-1 bg-border-dark rounded-full mx-auto mb-5" />
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xl font-extrabold text-white">আমার Roadmaps</h3>
+                <button onClick={() => setShowSwitcher(false)}
+                  className="w-8 h-8 rounded-full bg-border-dark flex items-center justify-center text-slate-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto">
+                {allRoadmaps.map((r) => {
+                  const isActive = roadmap?.id === r.id;
+                  return (
+                    <button key={r.id} onClick={() => !isActive && switchRoadmap(r.id)}
+                      className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left ${
+                        isActive
+                          ? 'border-primary bg-primary/10 cursor-default'
+                          : 'border-border-dark hover:border-primary/40 bg-bg-dark cursor-pointer'
+                      }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-primary/20' : 'bg-border-dark'}`}>
+                          <BookOpen className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-slate-500'}`} />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-white'}`}>{r.title}</p>
+                          <p className="text-xs text-slate-500">{r.total_days} days · {new Date(r.created_at).toLocaleDateString('bn-BD')}</p>
+                        </div>
+                      </div>
+                      {isActive && <span className="text-[10px] bg-primary/20 text-primary px-2 py-1 rounded-full font-bold">Active</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => { setShowSwitcher(false); router.push('/upload'); }}
+                className="w-full mt-4 py-3 border-2 border-dashed border-border-dark rounded-2xl text-slate-500 font-bold text-sm hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> নতুন Roadmap তৈরি করো
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

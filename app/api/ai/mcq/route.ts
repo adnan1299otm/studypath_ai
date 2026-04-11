@@ -29,10 +29,23 @@ export async function POST(req: Request) {
       .single();
     if (!roadmap) return NextResponse.json({ error: 'Roadmap not found' }, { status: 404 });
 
-    const startDay = Math.max(1, dayNumber - 4);
-    const allTopicIds: string[] = [];
+    // Get last 5 ACTUALLY COMPLETED days for this roadmap
+    const { data: completedDays } = await supabase
+      .from('day_progress')
+      .select('day_number')
+      .eq('roadmap_id', roadmapId)
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .order('day_number', { ascending: false })
+      .limit(5);
 
-    for (let d = startDay; d <= dayNumber; d++) {
+    const targetDays = completedDays?.map((d: any) => d.day_number) || [];
+    // fallback to calculation if no completed days found
+    const fallbackDays = Array.from({ length: 5 }, (_, i) => Math.max(1, dayNumber - i)).filter(d => d >= 1);
+    const daysToUse = targetDays.length > 0 ? targetDays : fallbackDays;
+
+    const allTopicIds: string[] = [];
+    for (const d of daysToUse) {
       const daySchedule = (roadmap.schedule as any[]).find(
         (s: any) => s.day_number === d || s.day === d
       );
@@ -73,7 +86,10 @@ export async function POST(req: Request) {
       }
     };
 
-    const prompt = `Generate exactly 10 multiple choice questions (MCQ) based on these topics: ${topicNames}.
+    const dayRange = daysToUse.length > 0 
+      ? `days ${Math.min(...daysToUse)}-${Math.max(...daysToUse)}` 
+      : `day ${dayNumber}`;
+    const prompt = `Generate exactly 10 multiple choice questions (MCQ) based on these topics from ${dayRange}: ${topicNames}.
 Each question must have exactly 4 options.
 Mix easy, medium and hard difficulty levels.
 Write questions in simple English or Banglish.
