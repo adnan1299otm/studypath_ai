@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   // Read environment variables dynamically to prevent Next.js from inlining them at build time
   const getEnv = (key: string) => process.env[key] || '';
-  
+
   const envScript = `
     window.ENV = {
       NEXT_PUBLIC_SUPABASE_URL: ${JSON.stringify(getEnv('NEXT_PUBLIC_SUPABASE_URL'))},

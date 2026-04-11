@@ -26,6 +26,9 @@ export default function ProfilePage() {
   const [editInstitution, setEditInstitution] = useState('');
   const [editSubject, setEditSubject] = useState('');
   
+  const [showThemeSheet, setShowThemeSheet] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('default');
+  
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
@@ -102,6 +105,27 @@ export default function ProfilePage() {
     window.location.reload();
   };
 
+  const openThemeSheet = () => {
+    setSelectedTheme(profile?.timer_theme || 'default');
+    setShowThemeSheet(true);
+  };
+
+  const saveTheme = async (themeId: string) => {
+    if (!profile) return;
+    
+    // Check if PRO theme
+    if (themeId !== 'default' && profile.plan !== 'pro') {
+      router.push('/pro');
+      return;
+    }
+    
+    setSelectedTheme(themeId);
+    await supabase.from('profiles').update({ timer_theme: themeId }).eq('id', profile.id);
+    setShowThemeSheet(false);
+    showToast('Theme updated!');
+    window.location.reload();
+  };
+
   const confirmLogout = () => {
     setShowLogoutConfirm(true);
   };
@@ -140,6 +164,15 @@ export default function ProfilePage() {
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   const avatarOptions = ['🎓','🦁','🐯','🦊','🐼','🦋','🚀','⚡','🌙','🔥','🎯','🌿'];
+
+  const themes = [
+    { id: 'default', name: 'Default', icon: '⚡', color: 'bg-primary/20 text-primary', isPro: false },
+    { id: 'forest', name: 'Forest Focus', icon: '🌲', color: 'bg-emerald-500/20 text-emerald-500', isPro: true },
+    { id: 'midnight', name: 'Midnight Deep', icon: '🌙', color: 'bg-indigo-500/20 text-indigo-500', isPro: true },
+    { id: 'sunset', name: 'Sunset Flow', icon: '🌅', color: 'bg-orange-500/20 text-orange-500', isPro: true },
+    { id: 'minimal', name: 'Minimal Mono', icon: '⚪', color: 'bg-slate-500/20 text-slate-300', isPro: true },
+    { id: 'ramadan', name: 'Ramadan Barakah', icon: '🕌', color: 'bg-amber-500/20 text-amber-500', isPro: true },
+  ];
 
   return (
     <div className="p-6 pb-24 min-h-screen bg-bg-dark">
@@ -350,7 +383,7 @@ export default function ProfilePage() {
           <h3 className="text-lg font-extrabold text-white">⚙️ Settings</h3>
         </div>
         <div className="divide-y divide-border-dark">
-          <button onClick={() => router.push('/timer')} className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.03] transition-colors">
+          <button onClick={openThemeSheet} className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.03] transition-colors">
             <span className="font-bold text-slate-300 text-sm">🎨 Timer Theme</span>
             <ChevronRight className="w-4 h-4 text-slate-500" />
           </button>
@@ -374,7 +407,7 @@ export default function ProfilePage() {
                 <Crown className="w-5 h-5 text-yellow-400" />
                 <h3 className="text-lg font-extrabold text-yellow-400">PRO Active</h3>
               </div>
-              <p className="text-slate-400 text-xs font-medium">
+              <p className="text-slate-400 text-xs font-medium" suppressHydrationWarning>
                 Expires: {profile.pro_expires_at ? new Date(profile.pro_expires_at).toLocaleDateString() : 'Never'}
               </p>
             </div>
@@ -483,6 +516,46 @@ export default function ProfilePage() {
             <button onClick={saveProfileEdit} className="w-full bg-primary text-white font-extrabold py-3.5 rounded-xl hover:bg-primary/90 transition-colors">
               Save Changes
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Theme Sheet */}
+      {showThemeSheet && (
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowThemeSheet(false)} />
+          <div className="relative bg-card-dark border-t border-border-dark rounded-t-3xl p-6 sheet-slide-up">
+            <h3 className="text-xl font-extrabold text-white mb-6 text-center">Timer Theme</h3>
+            <div className="space-y-3 mb-8">
+              {themes.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => saveTheme(theme.id)}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                    selectedTheme === theme.id 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border-dark bg-bg-dark hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${theme.color}`}>
+                      {theme.icon}
+                    </div>
+                    <span className="font-bold text-white">{theme.name}</span>
+                  </div>
+                  
+                  {theme.isPro && profile?.plan !== 'pro' ? (
+                    <span className="bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                      PRO
+                    </span>
+                  ) : selectedTheme === theme.id ? (
+                    <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  ) : null}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

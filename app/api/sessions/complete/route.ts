@@ -67,12 +67,28 @@ export async function POST(request: Request) {
         .eq('day_number', day_number + 1)
     }
 
-    // 4. Award XP and update streak using the database function
-    // This function handles date-based streak logic correctly
-    await adminClient.rpc('complete_day_and_award_xp', {
-      p_user_id: user.id,
-      p_xp_earned: xp_earned,
-    })
+    // 4. Award XP, level and streak — direct update, no SQL function dependency
+    const { data: profileData } = await adminClient
+      .from('profiles')
+      .select('xp, streak, level')
+      .eq('id', user.id)
+      .single()
+
+    if (profileData) {
+      const new_xp = (profileData.xp || 0) + xp_earned
+      const new_level = Math.floor(new_xp / 200) + 1
+      const new_streak = (profileData.streak || 0) + 1
+
+      await adminClient
+        .from('profiles')
+        .update({
+          xp: new_xp,
+          level: new_level,
+          streak: new_streak,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+    }
 
     return NextResponse.json({ success: true, xp_earned })
   } catch (error: unknown) {

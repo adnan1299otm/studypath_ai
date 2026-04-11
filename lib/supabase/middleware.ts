@@ -17,9 +17,6 @@ export async function updateSession(request: NextRequest) {
     supabaseUrl,
     supabaseAnonKey,
     {
-      global: {
-        fetch: (...args) => fetch(...args),
-      },
       cookies: {
         getAll() {
           return request.cookies.getAll()

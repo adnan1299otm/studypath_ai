@@ -330,7 +330,19 @@ RETURNS void AS $$
 DECLARE
   v_last_study_date DATE;
   v_today DATE := CURRENT_DATE;
+  v_current_xp INTEGER;
+  v_new_xp INTEGER;
+  v_new_level INTEGER;
 BEGIN
+  -- Get current XP first
+  SELECT xp INTO v_current_xp
+  FROM public.profiles
+  WHERE id = p_user_id;
+
+  -- Calculate new XP and level correctly
+  v_new_xp := COALESCE(v_current_xp, 0) + p_xp_earned;
+  v_new_level := FLOOR(v_new_xp / 200) + 1;
+
   -- Get the last date the user studied (excluding today's just-inserted session)
   SELECT DATE(ended_at) INTO v_last_study_date
   FROM public.study_sessions
@@ -340,25 +352,23 @@ BEGIN
   ORDER BY ended_at DESC
   LIMIT 1;
 
-  -- Update XP and level
+  -- Update XP, level and streak in one statement using pre-calculated values
   UPDATE public.profiles
   SET
-    xp = xp + p_xp_earned,
-    level = FLOOR((xp + p_xp_earned) / 200) + 1,
-    -- Streak logic: only update streak once per day
+    xp = v_new_xp,
+    level = v_new_level,
     streak = CASE
       WHEN NOT EXISTS (
         SELECT 1 FROM public.study_sessions
         WHERE user_id = p_user_id
           AND DATE(ended_at) = v_today
-          AND ended_at < NOW() -- exclude the session just inserted
+          AND ended_at < NOW()
       ) THEN
-        -- First session today: check if yesterday had a session
         CASE
           WHEN v_last_study_date = v_today - INTERVAL '1 day' THEN streak + 1
           ELSE 1
         END
-      ELSE streak -- already studied today, don't change streak
+      ELSE streak
     END,
     updated_at = NOW()
   WHERE id = p_user_id;

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map, Trophy, Brain, User } from 'lucide-react';
+import { Map, Trophy, Brain, User, BookOpen } from 'lucide-react';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -17,7 +17,7 @@ export default function BottomNav() {
     { name: 'Roadmap', href: '/roadmap', icon: Map, activeColor: 'text-white' },
     { name: 'Rank', href: '/rank', icon: Trophy, activeColor: 'text-white' },
     { name: 'AI', href: '/ai', icon: Brain, activeColor: 'text-primary', isCenter: true },
-    { name: 'হাদিস', href: '/hadith', emoji: '☪️', activeColor: 'text-emerald-400' },
+    { name: 'হাদিস', href: '/hadith', icon: BookOpen, activeColor: 'text-emerald-400' },
     { name: 'Profile', href: '/profile', icon: User, activeColor: 'text-white' },
   ];
 
@@ -41,8 +41,8 @@ export default function BottomNav() {
 
           return (
             <Link key={tab.name} href={tab.href} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${isActive && tab.name === 'হাদিস' ? 'bg-emerald-900/30' : ''}`}>
-              {tab.emoji ? (
-                <span className={`text-xl transition-all ${!isActive ? 'opacity-50 grayscale' : 'drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]'}`}>{tab.emoji}</span>
+              {tab.name === 'হাদিস' ? (
+                <BookOpen className={`w-6 h-6 ${colorClass}`} />
               ) : (
                 tab.icon && <tab.icon className={`w-5 h-5 ${colorClass}`} />
               )}
