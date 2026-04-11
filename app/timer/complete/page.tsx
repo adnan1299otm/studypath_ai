@@ -132,8 +132,26 @@ function CompleteContent() {
   const duration = searchParams?.get('duration') || '0';
   const day = searchParams?.get('day');
   const roadmapId = searchParams?.get('roadmap');
-  const isPro = searchParams?.get('pro') === 'true';
   const router = useRouter();
+
+  const [isPro, setIsPro] = useState(false);
+  const [planLoaded, setPlanLoaded] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { setPlanLoaded(true); return; }
+      supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          setIsPro(data?.plan === 'pro');
+          setPlanLoaded(true);
+        });
+    });
+  }, [supabase]);
 
   // Simple confetti effect using emojis
   useEffect(() => {
@@ -197,7 +215,7 @@ function CompleteContent() {
         </div>
 
         {/* AI Q&A Section */}
-        {day && roadmapId && (
+        {planLoaded && day && roadmapId && (
           <div className="w-full mt-6 mb-4 text-left">
             {isPro ? (
               <ExamSection dayNumber={Number(day)} roadmapId={roadmapId} />
@@ -218,7 +236,7 @@ function CompleteContent() {
         )}
 
         {/* MCQ Test — every 5 days */}
-        {day && roadmapId && Number(day) % 5 === 0 && (
+        {planLoaded && day && roadmapId && Number(day) % 5 === 0 && (
           <div className="w-full mt-4 mb-6 text-left">
             {isPro ? (
               <button

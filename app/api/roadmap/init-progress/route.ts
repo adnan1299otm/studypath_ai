@@ -8,11 +8,21 @@ export async function POST(request: Request) {
 
   const { roadmap_id, total_days } = await request.json()
 
+  // Check if user is PRO
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', user.id)
+    .single()
+
+  const isPro = profile?.plan === 'pro'
+
+  // PRO users get ALL days available. Free users get only day 1 available.
   const rows = Array.from({ length: total_days }, (_, i) => ({
     user_id: user.id,
     roadmap_id,
     day_number: i + 1,
-    status: i === 0 ? 'available' : 'locked',
+    status: isPro ? 'available' : (i === 0 ? 'available' : 'locked'),
   }))
 
   const { error } = await supabase

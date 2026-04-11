@@ -137,6 +137,32 @@ export default function RoadmapPage() {
     fetchRoadmap();
   }, [supabase]);
 
+  useEffect(() => {
+    if (!roadmap || profile?.plan !== 'pro') return;
+    // If PRO user has locked days (old roadmap), unlock them all
+    const hasLocked = days.some(d => d.status === 'locked');
+    if (!hasLocked) return;
+
+    const unlockAll = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase
+        .from('day_progress')
+        .update({ status: 'available' })
+        .eq('roadmap_id', roadmap.id)
+        .eq('user_id', user.id)
+        .eq('status', 'locked');
+      // Refresh days
+      const { data: refreshed } = await supabase
+        .from('day_progress')
+        .select('*')
+        .eq('roadmap_id', roadmap.id)
+        .order('day_number');
+      if (refreshed) setDays(refreshed as DayProgress[]);
+    };
+    unlockAll();
+  }, [roadmap, profile, days, supabase]);
+
   // Parse schedule safely for render
   let parsedSchedule: any[] = [];
   if (roadmap) {
@@ -324,7 +350,8 @@ export default function RoadmapPage() {
           const isLeft = i % 2 === 0;
           const isCurrent = i === currentDayIndex;
           const isCompleted = day.status === 'completed';
-          const isLocked = !isCurrent && !isCompleted && (profile?.plan !== 'pro' || day.status === 'locked');
+          const isPro = profile?.plan === 'pro';
+          const isLocked = !isCurrent && !isCompleted && !isPro && day.status === 'locked';
 
           return (
             <div key={day.id || `day-${day.day_number}`} className="w-full flex flex-col items-center">
