@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   title: 'StudyPath AI',
   description: 'Gamified, AI-powered study planner for Bangladeshi students.',
   manifest: '/manifest.json',
-<<<<<<< HEAD
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
@@ -20,8 +19,6 @@ export const metadata: Metadata = {
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
   },
-=======
->>>>>>> e778abf694b250563359473f2a170eba7bc0f202
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

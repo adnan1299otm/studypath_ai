@@ -87,7 +87,6 @@ function ConfigureContent() {
     if (!id) return;
 
     setLoading(true);
-<<<<<<< HEAD
     const apiLevel = level === 'talented' ? 'advanced' : level === 'mid' ? 'intermediate' : 'beginner';
     const localDate = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000));
     
@@ -99,32 +98,6 @@ function ConfigureContent() {
       studentLevel: apiLevel
     });
     router.push(`/creating-roadmap?${params.toString()}`);
-=======
-    try {
-      const apiLevel = level === 'talented' ? 'advanced' : level === 'mid' ? 'intermediate' : 'beginner';
-      const localDate = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000));
-      
-      const res = await fetch('/api/ai/generate-roadmap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          syllabusId: id,
-          examDeadline: localDate.toISOString().split('T')[0],
-          dailyHours: dailyHours,
-          studentLevel: apiLevel
-        })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
-      router.push('/roadmap');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to generate roadmap');
-      setLoading(false);
-    }
->>>>>>> e778abf694b250563359473f2a170eba7bc0f202
   };
 
   return (

@@ -77,7 +77,6 @@ export async function POST(request: Request) {
     if (profileData) {
       const new_xp = (profileData.xp || 0) + xp_earned
       const new_level = Math.floor(new_xp / 200) + 1
-<<<<<<< HEAD
       // 36-hour streak logic
       const { data: recentSessions } = await adminClient
         .from('study_sessions')
@@ -103,9 +102,6 @@ export async function POST(request: Request) {
         }
         // hoursDiff < 1: multiple sessions same day, streak stays the same
       }
-=======
-      const new_streak = (profileData.streak || 0) + 1
->>>>>>> e778abf694b250563359473f2a170eba7bc0f202
 
       await adminClient
         .from('profiles')

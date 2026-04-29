@@ -21,7 +21,6 @@ export default function UploadPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-<<<<<<< HEAD
       // Free plan: max 1 active syllabus
       const { data: profileData } = await supabase
         .from('profiles')
@@ -43,8 +42,6 @@ export default function UploadPage() {
         }
       }
 
-=======
->>>>>>> e778abf694b250563359473f2a170eba7bc0f202
       const { data, error } = await supabase
         .from('syllabuses')
         .insert({
