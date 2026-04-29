@@ -72,7 +72,6 @@ export async function POST(req: Request) {
       .eq('user_id', user.id)
       .neq('id', roadmap.id);
 
-<<<<<<< HEAD
     // PRO users get ALL days available from day 1. Free users get only day 1.
     const { data: userProfile } = await supabase
       .from('profiles')
@@ -93,17 +92,6 @@ export async function POST(req: Request) {
     await supabase
       .from('day_progress')
       .upsert(dayProgressRows, { onConflict: 'user_id,roadmap_id,day_number' })
-=======
-    // Create Day Progress
-    const dayProgressToInsert = schedule.map((day: any) => ({
-      user_id: user.id,
-      roadmap_id: roadmap.id,
-      day_number: day.day_number,
-      status: day.day_number === 1 ? 'unlocked' : 'locked' // Day 1 always unlocked
-    }));
-
-    await supabase.from('day_progress').insert(dayProgressToInsert);
->>>>>>> e778abf694b250563359473f2a170eba7bc0f202
 
     return NextResponse.json({ success: true, roadmapId: roadmap.id });
   } catch (error: any) {
