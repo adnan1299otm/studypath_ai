@@ -87,6 +87,19 @@ function ConfigureContent() {
     if (!id) return;
 
     setLoading(true);
+<<<<<<< HEAD
+    const apiLevel = level === 'talented' ? 'advanced' : level === 'mid' ? 'intermediate' : 'beginner';
+    const localDate = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000));
+    
+    // Configure data টা URL params এ পাঠাও, creating-roadmap page নিজেই API call করবে
+    const params = new URLSearchParams({
+      syllabusId: id,
+      examDeadline: localDate.toISOString().split('T')[0],
+      dailyHours: String(dailyHours),
+      studentLevel: apiLevel
+    });
+    router.push(`/creating-roadmap?${params.toString()}`);
+=======
     try {
       const apiLevel = level === 'talented' ? 'advanced' : level === 'mid' ? 'intermediate' : 'beginner';
       const localDate = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000));
@@ -111,6 +124,7 @@ function ConfigureContent() {
       alert('Failed to generate roadmap');
       setLoading(false);
     }
+>>>>>>> e778abf694b250563359473f2a170eba7bc0f202
   };
 
   return (

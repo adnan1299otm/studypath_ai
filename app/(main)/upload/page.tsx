@@ -21,6 +21,30 @@ export default function UploadPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+<<<<<<< HEAD
+      // Free plan: max 1 active syllabus
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData?.plan !== 'pro') {
+        const { count } = await supabase
+          .from('syllabuses')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+
+        if ((count ?? 0) >= 1) {
+          alert('Free plan allows only 1 syllabus. Upgrade to PRO to create more. (/pro)')
+          setLoading(false)
+          return
+        }
+      }
+
+=======
+>>>>>>> e778abf694b250563359473f2a170eba7bc0f202
       const { data, error } = await supabase
         .from('syllabuses')
         .insert({

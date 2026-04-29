@@ -7,7 +7,11 @@ import { Map, Trophy, Brain, User, BookOpen } from 'lucide-react';
 export default function BottomNav() {
   const pathname = usePathname();
 
+<<<<<<< HEAD
+  if (pathname === '/configure' || pathname === '/timer' || pathname === '/creating-roadmap') {
+=======
   if (pathname === '/configure' || pathname === '/timer') {
+>>>>>>> e778abf694b250563359473f2a170eba7bc0f202
     return null;
   }
 
